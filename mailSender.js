@@ -10,6 +10,7 @@ const kafkaFile = '/var/www/your_domain/U-Team/Account/storage/app/1data.json';
 
 async function getUrl() {
     const consumer = await createConsumer(config.consumer);
+    consumer.subscribe(['u-craft-topic'])
     consumer.consume((err, messages) => {
         if (err) console.error("error", err);
 
@@ -22,7 +23,9 @@ async function getUrl() {
         }
     })
 }
-
+getUrl()
+    .then()
+    .catch((e)=>console.log(e))
 
 app.get('/send-mail', (req, res) => {
     async function example() {
