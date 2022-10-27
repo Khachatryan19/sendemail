@@ -1,7 +1,8 @@
 let express = require('express');
 let app = express();
 let nodemailer = require('nodemailer');
-const http = require('http'); // or 'https' for https:// URLs
+const http = require('http');
+const kafkaFile = '/var/www/your_domain/U-Team/Account/storage/app/Untitled1.json';
 
 
 app.use(express.urlencoded({
@@ -9,11 +10,11 @@ app.use(express.urlencoded({
 }));
 app.use(express.json());
 
-app.get('/getAll', () => {
+app.get('/send-mail', () => {
     const fs = require('fs');
-
-    const file = fs.createWriteStream("users.ods");
-    let download = http.get("/var/www/InvitationScheme/storage/app/users.ods", function(response) {
+    const file = fs.readFile(kafkaFile);
+    console.log(file);
+    let download = app.download("/var/www/InvitationScheme/storage/app/users.ods", function(response) {
         response.pipe(file);
 
         file.on("finish", () => {
