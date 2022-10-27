@@ -6,18 +6,52 @@ let nodemailer = require('nodemailer');
 let config = require('./config.js');
 const fs = require("fs");
 const {createConsumer} = require('./kafka');
+const consumerTopic = process.env.KAFKA_CONSUME_TOPIC;
 const kafkaFile = '/var/www/your_domain/U-Team/Account/storage/app/1data.json';
+
+async function onConsumed(consumer, key, records, { topic, offset, partition }) {
+    try {
+
+        offset++;
+        consumer.commit({ topic, offset, partition });
+    } catch (e) {
+    }
+}
 
 async function getUrl() {
     const consumer = await createConsumer(config.consumer);
-    consumer.subscribe(['u-craft-topic'])
+    consumer.subscribe([consumerTopic])
     consumer.consume((err, messages) => {
         if (err) console.error("error", err);
 
         try {
             const {key, value, topic, offset, partition} = messages;
-            const records = JSON.parse(value.toString());
-            console.log(records);
+            const records = value.toString();
+            console.log(records)
+            async function example() {
+
+                try {
+                    return JSON.parse(await fs.promises.readFile(
+                        records,
+                        {encoding: 'utf8'},
+                        function (user) {
+                            send(user)
+                                .catch(console.error);
+                        }));
+                } catch (err) {
+                    return err;
+                }
+            }
+
+            example().then(function (users) {
+                console.log(typeof users)
+                users.map((user) => {
+                    send(user)
+                        .then(()=>console.log('messages sent'))
+                        .catch(console.error);
+                })
+            })
+            onConsumed( consumer, key.toString(), records, { topic, offset, partition });
         } catch (err) {
             console.error("error", err);
         }
@@ -28,26 +62,7 @@ getUrl()
     .catch((e)=>console.log(e))
 
 app.get('/send-mail', (req, res) => {
-    async function example() {
 
-        try {
-            return JSON.parse(await fs.promises.readFile(
-                await getUrl(),
-                {encoding: 'utf8'},
-                function (user) {
-                    send(user).catch(console.error);
-                }));
-        } catch (err) {
-            return err;
-        }
-    }
-
-    example().then(function (users) {
-        users.map((user) => {
-            send(user).catch(console.error);
-            res.send('mails sent').ok;
-        })
-    })
 });
 
 async function send(user) {
@@ -63,6 +78,5 @@ async function send(user) {
     console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
 
 }
-
 
 app.listen(3000);

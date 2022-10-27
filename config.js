@@ -34,8 +34,19 @@ const consumer = {
     "allow.auto.create.topics": false,
     "socket.keepalive.enable": true,
     "session.timeout.ms": 60000,
-    "enable.auto.commit": false,
+    "enable.auto.commit": false
 };
+
+if (KAFKA_SECURITY_PROTOCOL) {
+    const security = {
+        "sasl.username": KAFKA_SASL_USERNAME,
+        "sasl.password": KAFKA_SASL_PASSWORD,
+        "security.protocol": KAFKA_SECURITY_PROTOCOL,
+        "sasl.mechanisms": KAFKA_SASL_MECHANISMS,
+    };
+
+    Object.assign(consumer, security);
+}
 
 module.exports = {
     transporter,
