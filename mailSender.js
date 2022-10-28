@@ -7,7 +7,6 @@ let config = require('./config.js');
 const fs = require("fs");
 const {createConsumer} = require('./kafka');
 const consumerTopic = process.env.KAFKA_CONSUME_TOPIC;
-const kafkaFile = '/var/www/your_domain/U-Team/Account/storage/app/1data.json';
 
 async function onConsumed(consumer, key, records, { topic, offset, partition }) {
     try {
@@ -27,7 +26,6 @@ async function getUrl() {
         try {
             const {key, value, topic, offset, partition} = messages;
             const records = value.toString();
-            console.log(records)
             async function example() {
 
                 try {
@@ -44,7 +42,6 @@ async function getUrl() {
             }
 
             example().then(function (users) {
-                console.log(typeof users)
                 users.map((user) => {
                     send(user)
                         .then(()=>console.log('messages sent'))
@@ -57,13 +54,6 @@ async function getUrl() {
         }
     })
 }
-getUrl()
-    .then()
-    .catch((e)=>console.log(e))
-
-app.get('/send-mail', (req, res) => {
-
-});
 
 async function send(user) {
     let transporter = nodemailer.createTransport(config.transporter);
@@ -72,10 +62,9 @@ async function send(user) {
         to: user.email,
         subject: 'password reset',
         text: '',
-        html: "<a href=" + 'http://127.0.0.1:8000/api/' + user.token + ">Reset Password</a>",
+        html: "<a href=" + 'http://127.0.0.1:8000/' + user.token + ">Reset Password</a>",
     })
     console.log("Message sent: %s", info.messageId);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
 
 }
 
