@@ -61,10 +61,6 @@ getUrl()
     .then()
     .catch((e)=>console.log(e))
 
-app.get('/send-mail', (req, res) => {
-
-});
-
 async function send(user) {
     let transporter = nodemailer.createTransport(config.transporter);
     let info = await transporter.sendMail({
