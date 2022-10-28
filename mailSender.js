@@ -29,7 +29,6 @@ async function getUrl() {
 
             example()
                 .then(function (users) {
-                    console.dir(users)
                     users.map((user) => {
                         send(user)
                             .then(() => console.log('messages sent'))
@@ -57,6 +56,7 @@ async function getUrl() {
         }
     })
 }
+
 getUrl()
     .then()
     .catch((e)=>console.log(e))
@@ -73,5 +73,3 @@ async function send(user) {
     console.log("Message sent: %s", info.messageId);
 
 }
-
-app.listen(3000);
