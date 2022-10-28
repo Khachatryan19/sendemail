@@ -4,15 +4,15 @@ let express = require('express');
 let app = express();
 let nodemailer = require('nodemailer');
 let config = require('./config.js');
-const fs = require("fs");
+const fs = require("fs").promises;
 const {createConsumer} = require('./kafka');
 const consumerTopic = process.env.KAFKA_CONSUME_TOPIC;
 
-async function onConsumed(consumer, key, records, { topic, offset, partition }) {
+async function onConsumed(consumer, key, records, {topic, offset, partition}) {
     try {
 
         offset++;
-        consumer.commit({ topic, offset, partition });
+        consumer.commit({topic, offset, partition});
     } catch (e) {
     }
 }
@@ -26,10 +26,20 @@ async function getUrl() {
         try {
             const {key, value, topic, offset, partition} = messages;
             const records = value.toString();
-            async function example() {
 
+            example()
+                .then(function (users) {
+                    console.dir(users)
+                    users.map((user) => {
+                        send(user)
+                            .then(() => console.log('messages sent'))
+                            .catch(console.error);
+                    })
+                })
+
+            async function example() {
                 try {
-                    return JSON.parse(await fs.promises.readFile(
+                    return JSON.parse(await fs.readFile(
                         records,
                         {encoding: 'utf8'},
                         function (user) {
@@ -41,19 +51,19 @@ async function getUrl() {
                 }
             }
 
-            example().then(function (users) {
-                users.map((user) => {
-                    send(user)
-                        .then(()=>console.log('messages sent'))
-                        .catch(console.error);
-                })
-            })
-            onConsumed( consumer, key.toString(), records, { topic, offset, partition });
+            onConsumed(consumer, key.toString(), records, {topic, offset, partition});
         } catch (err) {
             console.error("error", err);
         }
     })
 }
+getUrl()
+    .then()
+    .catch((e)=>console.log(e))
+
+app.get('/send-mail', (req, res) => {
+
+});
 
 async function send(user) {
     let transporter = nodemailer.createTransport(config.transporter);
