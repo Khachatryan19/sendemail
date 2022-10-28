@@ -1,8 +1,6 @@
 "use strict"
 
 const kafka = require('node-rdkafka');
-const config = require("./config.js");
-
 
 function createConsumer(config) {
     const consumer = new kafka.KafkaConsumer(config, { "auto.offset.reset": "earliest" });
