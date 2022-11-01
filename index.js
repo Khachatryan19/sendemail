@@ -1,78 +1,83 @@
-let express = require('express');
-let app = express();
-let nodemailer = require('nodemailer');
-const http = require('http');
-const kafkaFile = '/var/www/your_domain/U-Team/Account/storage/app/Untitled1.json';
+"use strict";
 
+const nodemailer = require('nodemailer');
+const config = require('./config.js');
+const fs = require("fs").promises;
+const {createConsumer, onConsumed} = require('./kafka');
+const consumerTopic = process.env.KAFKA_CONSUME_TOPIC;
+const transporter = nodemailer.createTransport(config.transporter);
 
-app.use(express.urlencoded({
-    extended: false
-}));
-app.use(express.json());
+async function run() {
+    const consumer = await createConsumer(config.consumer);
 
-app.get('/send-mail', () => {
-    const fs = require('fs');
-    const file = fs.readFile(kafkaFile);
-    console.log(file);
-    let download = app.download("/var/www/InvitationScheme/storage/app/users.ods", function(response) {
-        response.pipe(file);
+    consumer.subscribe([consumerTopic])
+    consumer.consume(async (err, messages) => {
+        if (err) return err;
 
-        file.on("finish", () => {
-            console.log(file);
-            file.close();
-            console.log("Download Completed");
-        });
-    });
-    let options = {
-        host: 'localhost',
-        port: 8001,
-        path: '/api/getAll',
-        method: 'GET'
-    }
+        try {
+            const {key, value, topic, offset, partition} = messages;
+            let url = value.toString();
+            i = 0;
+            users = JSON.parse((await getUsers(url)));
+            await send();
 
-    let request = http.request(options, function (res) {
-        let data = '';
-        res.on('data', function (chunk) {
-            data += chunk;
-        });
-        res.on('end', function () {
-            console.log(data);
-            JSON.parse(data).map((user)=>{
-                main(user).catch(console.error);
-            })
-        });
-    });
-    request.on('error', function (e) {
-        console.log(e.message);
-    });
-    request.end();
-});
+            if (url) {
+                await onConsumed(
+                    consumer,
+                    key.toString(),
+                    url,
+                    {topic, offset, partition}
+                );
+            }
 
-app.listen('3001');
-
-console.log('Your node server start successfully....');
-
-exports = module.exports = app;
-
-
-async function main(user) {
-    let transporter = nodemailer.createTransport({
-        host: "smtp.mailtrap.io",
-        port: 2525,
-        auth: {
-            user: "10229b47887200",
-            pass: "828d6ae86e1e29"
+            return url;
+        } catch (e) {
+            return e;
         }
     });
 
-    let info = await transporter.sendMail({
-        from: '"Fred Foo 👻" <foo@example.com>',
-        to: user.email,
-        subject: 'password reset',
-        text: '',
-        html: "<a href="+'http://127.0.0.1:8000/api/'+user.token+">Reset Password</a>",
-    });
+    let users = [];
+    let i = 0;
 
-    console.log("Message sent: %s", info.messageId);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    /**
+     *
+     * @returns {Promise<*>}
+     */
+    async function send() {
+        return await transporter.sendMail({
+            from: 'Fred Foo 👻 <foo@example.com>',
+            to: users[i].email,
+            subject: 'password reset',
+            text: '',
+            html: "<a href=" + 'http://127.0.0.1:8000/' + users[i].email + ">Reset Password</a>",
+        }, (error, info) => {
+
+            if (error) return console.log(error);
+
+            if (++i < users.length) send();
+            console.log('Message sent: %s', info.messageId);
+        });
+    }
+
+    /**
+     * @param url
+     *
+     * @returns {Promise<string|*>}
+     */
+    async function getUsers(url) {
+        try {
+            return fs.readFile(
+                url,
+                {encoding: 'utf8'},
+            );
+        } catch (err) {
+            return err;
+        }
+
+
+    }
 }
+
+run().catch((e) => {
+    console.log(e);
+});

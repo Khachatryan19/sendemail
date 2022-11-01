@@ -22,6 +22,16 @@ function createConsumer(config) {
     });
 }
 
+async function onConsumed(consumer, key, records, {topic, offset, partition}) {
+    try {
+        offset++;
+        consumer.commit({topic, offset, partition});
+    } catch (e) {
+        console.log(e);
+    }
+}
+
 module.exports = {
     createConsumer,
+    onConsumed,
 };

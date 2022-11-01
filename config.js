@@ -11,24 +11,20 @@ const {
     KAFKA_SASL_MECHANISMS,
     KAFKA_SASL_USERNAME,
     KAFKA_SASL_PASSWORD,
-    KAFKA_CONSUMER_GROUP_ID,
-    KAFKA_CONSUME_TOPIC,
-    KAFKA_PRODUCE_NOTIFICATION_TOPIC,
-    KAFKA_PRODUCER_DEBUG,
-    KAFKA_CONSUMER_DEBUG,
+    KAFKA_CONSUMER_GROUP_ID
 } = process.env
 
 const transporter = {
     host: "smtp.mailtrap.io",
     port: 2525,
     auth: {
-        user: "b7de42f5505448",
-        pass: "1e9a61619bfa66"
+        user: "62fed568fc0ce3",
+        pass: "fcdcacbc13d3a2"
     }
 };
 
 const consumer = {
-    "client.id": KAFKA_CLIENT_ID || "action-tracker-app",
+    "client.id": KAFKA_CLIENT_ID,
     "bootstrap.servers": KAFKA_BOOTSTRAP_SERVERS.split(","),
     "group.id": KAFKA_CONSUMER_GROUP_ID,
     "allow.auto.create.topics": false,
